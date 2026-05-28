@@ -189,5 +189,50 @@ function setHTML(id, html) {
   if (el && html) el.innerHTML = html;
 }
 
+// ── STUDIO CAROUSEL ──
+function initStudioCarousel() {
+  const root = document.getElementById('studioCarousel');
+  if (!root) return;
+  const slides = Array.from(root.querySelectorAll('.studio-slide'));
+  if (!slides.length) return;
+  const interval = Number(root.getAttribute('data-interval')) || 4500;
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let current = 0, timer = null;
+
+  const dotsWrap = root.querySelector('.studio-dots');
+  const dots = slides.map((_, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'studio-dot' + (i === 0 ? ' is-active' : '');
+    b.setAttribute('aria-label', "Vai all'immagine " + (i + 1));
+    b.addEventListener('click', () => { show(i); restart(); });
+    if (dotsWrap) dotsWrap.appendChild(b);
+    return b;
+  });
+
+  function show(n) {
+    current = (n + slides.length) % slides.length;
+    slides.forEach((s, i) => s.classList.toggle('is-active', i === current));
+    dots.forEach((d, i) => d.classList.toggle('is-active', i === current));
+  }
+  const next = () => show(current + 1);
+  const prev = () => show(current - 1);
+  const start = () => { if (!reduce && !timer) timer = setInterval(next, interval); };
+  const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
+  const restart = () => { stop(); start(); };
+
+  const nextBtn = root.querySelector('.studio-next');
+  const prevBtn = root.querySelector('.studio-prev');
+  if (nextBtn) nextBtn.addEventListener('click', () => { next(); restart(); });
+  if (prevBtn) prevBtn.addEventListener('click', () => { prev(); restart(); });
+  root.addEventListener('mouseenter', stop);
+  root.addEventListener('mouseleave', start);
+  root.addEventListener('focusin', stop);
+  root.addEventListener('focusout', start);
+
+  start();
+}
+initStudioCarousel();
+
 // Load CMS content
 loadCMS();
